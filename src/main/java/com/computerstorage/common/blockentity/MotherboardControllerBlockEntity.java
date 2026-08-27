@@ -1,7 +1,6 @@
 package com.computerstorage.common.blockentity;
 
 import com.computerstorage.common.computer.Computer;
-import com.computerstorage.common.computer.services.ServiceContainer;
 import com.computerstorage.common.hardware.HardwareComponentType;
 import com.computerstorage.common.hardware.HardwareManager;
 import com.computerstorage.common.hardware.HardwareSlot;
@@ -11,7 +10,6 @@ import com.computerstorage.common.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
@@ -50,6 +48,9 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MotherboardControllerBlockEntity be) {
         be.syncHardwareFromInventory();
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            be.computer.services().get(com.computerstorage.common.computer.services.LogisticsManager.class).bindLevel(serverLevel);
+        }
         be.computer.tick();
     }
 
@@ -96,8 +97,8 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     @Override public boolean stillValid(Player player) { return isUsableByPlayer(player); }
     @Override public void clearContent() { items.clear(); setChanged(); }
     @Override public boolean canPlaceItem(int slot, ItemStack stack) { return slot >= HARDWARE_SLOTS || (slot < HARDWARE_SLOTS && hardwareType(stack) == HardwareSlot.values()[slot].type()); }
-    @Override protected void saveAdditional(CompoundTag tag) { super.saveAdditional(tag); ItemStackHelper.saveAllItems(tag, items); tag.putInt("Energy", energy.getEnergyStored()); CompoundTag c = new CompoundTag(); computer.save(c); tag.put("Computer", c); }
-    @Override public void load(CompoundTag tag) { super.load(tag); ItemStackHelper.loadAllItems(tag, items); energy.setEnergy(tag.getInt("Energy")); if (tag.contains("Computer")) computer.load(tag.getCompound("Computer")); }
+    @Override protected void saveAdditional(net.minecraft.nbt.CompoundTag tag) { super.saveAdditional(tag); ItemStackHelper.saveAllItems(tag, items); tag.putInt("Energy", energy.getEnergyStored()); net.minecraft.nbt.CompoundTag c = new net.minecraft.nbt.CompoundTag(); computer.save(c); tag.put("Computer", c); }
+    @Override public void load(net.minecraft.nbt.CompoundTag tag) { super.load(tag); ItemStackHelper.loadAllItems(tag, items); energy.setEnergy(tag.getInt("Energy")); if (tag.contains("Computer")) computer.load(tag.getCompound("Computer")); }
     @Override public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) { if (capability == ForgeCapabilities.ENERGY) return energyCapability.cast(); if (capability == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast(); return super.getCapability(capability, side); }
     @Override public void invalidateCaps() { super.invalidateCaps(); energyCapability.invalidate(); itemCapability.invalidate(); }
 
