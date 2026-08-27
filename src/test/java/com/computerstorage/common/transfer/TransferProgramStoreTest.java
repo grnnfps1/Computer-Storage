@@ -31,7 +31,7 @@ class TransferProgramStoreTest {
         TransferProgramStore restored = new TransferProgramStore();
         restored.load(tag);
         assertEquals(1, restored.programs().size());
-        TransferProgram p = restored.programs().getFirst();
+        TransferProgram p = restored.programs().get(0);
         assertEquals("ore", p.id());
         assertEquals("minecraft:iron_ingot", p.filter().itemId());
         assertEquals(20, p.schedule().intervalTicks());
