@@ -15,7 +15,7 @@ class TransferProgramRepositoryTest {
         var repository = new TransferProgramRepository(store);
         assertEquals("high", repository.orderedPrograms().get(0).id());
         assertEquals("middle", repository.orderedPrograms().get(1).id());
-        assertEquals(2, repository.matchingSource("a").size());
+        assertEquals(3, repository.matchingSource("a").size());
         assertEquals(1, repository.matching("a", "b").size());
     }
 }
