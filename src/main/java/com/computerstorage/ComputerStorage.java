@@ -1,6 +1,7 @@
 package com.computerstorage;
 
 import com.computerstorage.common.computer.Computer;
+import com.computerstorage.common.network.NetworkChannel;
 import com.computerstorage.common.registry.ModBlockEntities;
 import com.computerstorage.common.registry.ModBlocks;
 import com.computerstorage.common.registry.ModItems;
@@ -26,6 +27,8 @@ public final class ComputerStorage {
         ModItems.ITEMS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModMenus.MENUS.register(modBus);
+        modBus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) ->
+                event.enqueueWork(NetworkChannel::register));
         LOGGER.info("{} foundation bootstrapped", MOD_NAME);
     }
 
