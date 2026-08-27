@@ -1,5 +1,7 @@
 package com.computerstorage.common.storage;
 
+import com.computerstorage.test.BootstrapMinecraft;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -7,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@BootstrapMinecraft
 class VirtualStorageTest {
     @Test
     void insertRespectsCapacity() {
