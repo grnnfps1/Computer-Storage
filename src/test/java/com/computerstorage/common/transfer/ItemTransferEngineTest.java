@@ -1,5 +1,7 @@
 package com.computerstorage.common.transfer;
 
+import com.computerstorage.test.BootstrapMinecraft;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.items.ItemStackHandler;
@@ -7,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@BootstrapMinecraft
 class ItemTransferEngineTest {
     @Test
     void movesOnlyItemsAcceptedByRule() {
