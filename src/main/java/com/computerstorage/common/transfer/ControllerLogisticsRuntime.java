@@ -20,7 +20,7 @@ public final class ControllerLogisticsRuntime {
 
     public int tick(long gameTime, boolean redstonePowered) {
         int moved = 0;
-        for (TransferProgram program : repository.programs()) {
+        for (TransferProgram program : repository.orderedPrograms()) {
             if (!program.enabled()) continue;
             TransferResult result = runner.run(program, gameTime, redstonePowered, runtimes);
             if (result.attempted()) moved += result.moved();
