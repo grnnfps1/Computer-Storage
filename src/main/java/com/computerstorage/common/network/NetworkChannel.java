@@ -26,22 +26,38 @@ public final class NetworkChannel {
         CHANNEL.registerMessage(nextId++, BindEndpointPacket.class,
                 BindEndpointPacket::encode, BindEndpointPacket::decode,
                 NetworkChannel::handleBindEndpoint);
+        CHANNEL.registerMessage(nextId++, CreateTransferProgramPacket.class,
+                CreateTransferProgramPacket::encode, CreateTransferProgramPacket::decode,
+                NetworkChannel::handleCreateTransferProgram);
     }
 
     private static void handleBindEndpoint(BindEndpointPacket message, java.util.function.Supplier<NetworkEvent.Context> supplier) {
         var context = supplier.get();
         ServerPlayer player = context.getSender();
         context.enqueueWork(() -> {
-            if (player == null || player.containerMenu == null) return;
-            var controller = player.serverLevel().getBlockEntity(message.pos());
-            if (controller instanceof com.computerstorage.common.blockentity.MotherboardControllerBlockEntity be) {
-                var logistics = be.computer().services().get(com.computerstorage.common.computer.services.LogisticsManager.class);
-                logistics.bindLevel(player.serverLevel());
-                if (message.validateAndBind(player, logistics.endpoints()) == com.computerstorage.common.transfer.EndpointBindingService.Result.OK) {
-                    CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
-                            SyncNetworkStatePacket.from(logistics.endpoints()));
-                }
+            if (player == null || !(player.containerMenu instanceof com.computerstorage.common.menu.MotherboardMenu menu)) return;
+            var controller = menu.getController();
+            if (controller == null || !controller.isUsableByPlayer(player)) return;
+            var logistics = controller.computer().services().get(com.computerstorage.common.computer.services.LogisticsManager.class);
+            logistics.bindLevel(player.serverLevel());
+            if (message.validateAndBind(player, logistics.endpoints()) == com.computerstorage.common.transfer.EndpointBindingService.Result.OK) {
+                CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
+                        SyncNetworkStatePacket.from(logistics.endpoints()));
             }
+        });
+        context.setPacketHandled(true);
+    }
+
+    private static void handleCreateTransferProgram(CreateTransferProgramPacket message, java.util.function.Supplier<NetworkEvent.Context> supplier) {
+        var context = supplier.get();
+        ServerPlayer player = context.getSender();
+        context.enqueueWork(() -> {
+            if (player == null || !(player.containerMenu instanceof com.computerstorage.common.menu.MotherboardMenu menu)) return;
+            var controller = menu.getController();
+            if (controller == null || !controller.isUsableByPlayer(player)) return;
+            var logistics = controller.computer().services().get(com.computerstorage.common.computer.services.LogisticsManager.class);
+            logistics.bindLevel(player.serverLevel());
+            logistics.addProgram(controller.computer(), message.toProgram());
         });
         context.setPacketHandled(true);
     }
