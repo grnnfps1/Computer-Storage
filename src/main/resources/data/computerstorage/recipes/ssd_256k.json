@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["DND", "NRN", "DID"],
+  "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}, "D": {"item": "minecraft:diamond"}, "N": {"item": "minecraft:netherite_scrap"}},
+  "result": {"item": "computerstorage:ssd_256k", "count": 1}
+}
