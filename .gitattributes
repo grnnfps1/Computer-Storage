@@ -1,0 +1,6 @@
+# gradlew is a POSIX shell script: CRLF here makes Linux/macOS fail with "bad interpreter",
+# so keep it LF in the worktree regardless of core.autocrlf.
+gradlew text eol=lf
+
+# Never let line-ending conversion touch the wrapper jar.
+gradle/wrapper/gradle-wrapper.jar binary

@@ -4,6 +4,7 @@ build/
 
 # Forge runtime
 run/
+logs/
 
 # IDE
 .idea/

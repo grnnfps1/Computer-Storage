@@ -2,6 +2,7 @@ package com.computerstorage.common.network;
 
 import com.computerstorage.common.transfer.TransferCondition;
 import com.computerstorage.common.transfer.TransferFilter;
+import com.computerstorage.test.BootstrapMinecraft;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@BootstrapMinecraft
 class CreateTransferProgramPacketTest {
     @Test
     void roundTripsProgramRequest() {

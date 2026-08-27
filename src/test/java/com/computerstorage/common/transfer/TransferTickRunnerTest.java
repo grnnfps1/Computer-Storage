@@ -1,5 +1,7 @@
 package com.computerstorage.common.transfer;
 
+import com.computerstorage.test.BootstrapMinecraft;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.items.ItemStackHandler;
@@ -9,6 +11,7 @@ import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@BootstrapMinecraft
 class TransferTickRunnerTest {
     @Test
     void scheduledProgramExecutesAgainstResolvedHandlers() {
