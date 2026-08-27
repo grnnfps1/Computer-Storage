@@ -1,18 +1,21 @@
 package com.computerstorage.common.blockentity;
 
-import com.computerstorage.common.block.MotherboardControllerBlock;
 import com.computerstorage.common.computer.Computer;
-import com.computerstorage.common.registry.ModBlockEntities;
 import com.computerstorage.common.menu.MotherboardMenu;
+import com.computerstorage.common.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,18 +26,16 @@ import net.minecraftforge.energy.EnergyStorage;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
-public final class MotherboardControllerBlockEntity extends BlockEntity implements Container, net.minecraft.world.MenuProvider {
+public final class MotherboardControllerBlockEntity extends BlockEntity implements Container, MenuProvider {
     public static final int SLOT_COUNT = 29;
     public static final int ENERGY_CAPACITY = 100_000;
     public static final int ENERGY_TRANSFER = 2_000;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final Computer computer = new Computer();
-    private final EnergyStorage energy = new EnergyStorage(ENERGY_CAPACITY, ENERGY_TRANSFER, ENERGY_TRANSFER);
+    private final PersistedEnergyStorage energy = new PersistedEnergyStorage(ENERGY_CAPACITY, ENERGY_TRANSFER, ENERGY_TRANSFER);
     private final LazyOptional<IEnergyStorage> energyCapability = LazyOptional.of(() -> energy);
     private final LazyOptional<IItemHandler> itemCapability = LazyOptional.of(() -> new InvWrapper(this));
 
@@ -87,12 +88,29 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     public boolean stillValid(Player player) { return isUsableByPlayer(player); }
     @Override
     public void clearContent() { items.clear(); setChanged(); }
-
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) { return slot >= 13; }
 
     @Override
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable net.minecraft.core.Direction side) {
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        ItemStackHelper.saveAllItems(tag, items);
+        tag.putInt("Energy", energy.getEnergyStored());
+        CompoundTag computerTag = new CompoundTag();
+        computer.save(computerTag);
+        tag.put("Computer", computerTag);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        ItemStackHelper.loadAllItems(tag, items);
+        energy.setEnergy(tag.getInt("Energy"));
+        if (tag.contains("Computer")) computer.load(tag.getCompound("Computer"));
+    }
+
+    @Override
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ENERGY) return energyCapability.cast();
         if (capability == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast();
         return super.getCapability(capability, side);
@@ -103,5 +121,15 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
         super.invalidateCaps();
         energyCapability.invalidate();
         itemCapability.invalidate();
+    }
+
+    private static final class PersistedEnergyStorage extends EnergyStorage {
+        private PersistedEnergyStorage(int capacity, int maxReceive, int maxExtract) {
+            super(capacity, maxReceive, maxExtract);
+        }
+
+        private void setEnergy(int value) {
+            energy = Math.max(0, Math.min(capacity, value));
+        }
     }
 }
