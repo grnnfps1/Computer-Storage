@@ -1,13 +1,19 @@
 package com.computerstorage.common.computer;
 
+import com.computerstorage.common.computer.bios.Bios;
+import com.computerstorage.common.computer.bios.BiosResult;
+import com.computerstorage.common.computer.os.OperatingSystem;
 import com.computerstorage.common.computer.services.*;
 import com.computerstorage.common.hardware.HardwareManager;
 import net.minecraft.nbt.CompoundTag;
 
 public final class Computer {
     private final ServiceContainer services = new ServiceContainer();
+    private final Bios bios = new Bios();
+    private final OperatingSystem operatingSystem = new OperatingSystem();
     private ComputerState state = ComputerState.OFF;
     private long uptime;
+    private BiosResult lastPost = BiosResult.NO_BOOT_DEVICE;
 
     public Computer() {
         services.register(HardwareManager.class, new HardwareManager());
@@ -16,22 +22,33 @@ public final class Computer {
         services.register(TemperatureManager.class, new TemperatureManager());
         services.register(NetworkManager.class, new NetworkManager());
         services.register(LogisticsManager.class, new LogisticsManager());
+        services.register(StorageManager.class, new StorageManager());
     }
 
     public void tick() {
         if (state == ComputerState.OFF) return;
+        if (state == ComputerState.POST) {
+            lastPost = bios.post(this);
+            if (lastPost == BiosResult.OK) state = operatingSystem.isInstalled() ? ComputerState.RUNNING : ComputerState.BIOS;
+            return;
+        }
         services.get(HardwareManager.class).tick();
         services.get(PowerManager.class).tick(this);
         services.get(TaskManager.class).tick(this);
         services.get(TemperatureManager.class).tick(this);
         services.get(NetworkManager.class).tick(this);
+        services.get(StorageManager.class).tick(this);
         services.get(LogisticsManager.class).tick(this);
         uptime++;
     }
 
     public void boot() { if (state == ComputerState.OFF) state = ComputerState.POST; }
-    public void shutdown() { state = ComputerState.SHUTDOWN; }
-    public void powerOff() { state = ComputerState.OFF; }
+    public void shutdown() { operatingSystem.shutdown(); state = ComputerState.SHUTDOWN; }
+    public void powerOff() { operatingSystem.shutdown(); state = ComputerState.OFF; }
+    public boolean hasBootDevice() { return services.get(StorageManager.class).storage().capacity() > 0; }
+    public HardwareManager hardware() { return services.get(HardwareManager.class); }
+    public OperatingSystem operatingSystem() { return operatingSystem; }
+    public BiosResult lastPost() { return lastPost; }
     public ComputerState getState() { return state; }
     public long getUptime() { return uptime; }
     public ServiceContainer services() { return services; }
@@ -39,10 +56,16 @@ public final class Computer {
     public void save(CompoundTag tag) {
         tag.putString("state", state.name());
         tag.putLong("uptime", uptime);
+        tag.putString("lastPost", lastPost.name());
+        CompoundTag os = new CompoundTag();
+        operatingSystem.save(os);
+        tag.put("OperatingSystem", os);
     }
 
     public void load(CompoundTag tag) {
         if (tag.contains("state")) state = ComputerState.valueOf(tag.getString("state"));
         uptime = tag.getLong("uptime");
+        if (tag.contains("lastPost")) lastPost = BiosResult.valueOf(tag.getString("lastPost"));
+        if (tag.contains("OperatingSystem")) operatingSystem.load(tag.getCompound("OperatingSystem"));
     }
 }
