@@ -1,0 +1,1 @@
+Temporary placeholder note: texture is generated in the asset build pipeline.
