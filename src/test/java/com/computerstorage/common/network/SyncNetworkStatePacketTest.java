@@ -1,6 +1,5 @@
 package com.computerstorage.common.network;
 
-import com.computerstorage.common.transfer.TransferEndpoint;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,8 +14,8 @@ class SyncNetworkStatePacketTest {
     @Test
     void endpointStateRoundTrips() {
         var original = new SyncNetworkStatePacket(List.of(
-                new TransferEndpoint("input", new BlockPos(1, 2, 3), Direction.NORTH),
-                new TransferEndpoint("wireless", new BlockPos(4, 5, 6), null)), true);
+                new SyncNetworkStatePacket.EndpointData("input", new BlockPos(1, 2, 3), Direction.NORTH),
+                new SyncNetworkStatePacket.EndpointData("wireless", new BlockPos(4, 5, 6), null)));
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         original.encode(buf);
         var decoded = SyncNetworkStatePacket.decode(buf);
