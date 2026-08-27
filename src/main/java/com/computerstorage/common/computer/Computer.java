@@ -1,7 +1,7 @@
 package com.computerstorage.common.computer;
 
-import com.computerstorage.common.hardware.HardwareManager;
 import com.computerstorage.common.computer.services.*;
+import com.computerstorage.common.hardware.HardwareManager;
 import net.minecraft.nbt.CompoundTag;
 
 public final class Computer {
@@ -15,6 +15,7 @@ public final class Computer {
         services.register(TaskManager.class, new TaskManager());
         services.register(TemperatureManager.class, new TemperatureManager());
         services.register(NetworkManager.class, new NetworkManager());
+        services.register(LogisticsManager.class, new LogisticsManager());
     }
 
     public void tick() {
@@ -24,6 +25,7 @@ public final class Computer {
         services.get(TaskManager.class).tick(this);
         services.get(TemperatureManager.class).tick(this);
         services.get(NetworkManager.class).tick(this);
+        services.get(LogisticsManager.class).tick(this);
         uptime++;
     }
 
@@ -40,7 +42,7 @@ public final class Computer {
     }
 
     public void load(CompoundTag tag) {
-        state = ComputerState.valueOf(tag.getString("state"));
+        if (tag.contains("state")) state = ComputerState.valueOf(tag.getString("state"));
         uptime = tag.getLong("uptime");
     }
 }
