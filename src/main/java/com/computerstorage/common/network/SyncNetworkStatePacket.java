@@ -1,6 +1,6 @@
 package com.computerstorage.common.network;
 
-import com.computerstorage.common.transfer.TransferEndpoint;
+import com.computerstorage.common.transfer.WorldTransferEndpointRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -15,8 +15,9 @@ public record SyncNetworkStatePacket(List<EndpointData> endpoints) implements Ne
         endpoints = List.copyOf(endpoints);
     }
 
-    public SyncNetworkStatePacket(List<TransferEndpoint> endpoints, boolean marker) {
-        this(endpoints.stream().map(EndpointData::from).toList());
+    public static SyncNetworkStatePacket from(WorldTransferEndpointRegistry registry) {
+        return new SyncNetworkStatePacket(registry.snapshot().entrySet().stream()
+                .map(e -> new EndpointData(e.getKey(), e.getValue().pos(), e.getValue().side())).toList());
     }
 
     @Override public int protocolVersion() { return NetworkConstants.PROTOCOL_VERSION; }
@@ -35,7 +36,6 @@ public record SyncNetworkStatePacket(List<EndpointData> endpoints) implements Ne
     }
 
     public record EndpointData(String id, BlockPos pos, Direction side) {
-        static EndpointData from(TransferEndpoint endpoint) { return new EndpointData(endpoint.id(), endpoint.pos(), endpoint.side()); }
         void encode(FriendlyByteBuf buf) {
             NetworkPackets.writeString(buf, id, 64);
             buf.writeBlockPos(pos);
