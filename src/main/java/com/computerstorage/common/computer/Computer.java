@@ -5,12 +5,14 @@ import com.computerstorage.common.computer.bios.BiosResult;
 import com.computerstorage.common.computer.os.OperatingSystem;
 import com.computerstorage.common.computer.services.*;
 import com.computerstorage.common.hardware.HardwareManager;
+import com.computerstorage.common.transfer.TransferProgramStore;
 import net.minecraft.nbt.CompoundTag;
 
 public final class Computer {
     private final ServiceContainer services = new ServiceContainer();
     private final Bios bios = new Bios();
     private final OperatingSystem operatingSystem = new OperatingSystem();
+    private final TransferProgramStore transferPrograms = new TransferProgramStore();
     private ComputerState state = ComputerState.OFF;
     private long uptime;
     private BiosResult lastPost = BiosResult.NO_BOOT_DEVICE;
@@ -55,6 +57,7 @@ public final class Computer {
     public HardwareManager hardware() { return services.get(HardwareManager.class); }
     public OperatingSystem operatingSystem() { return operatingSystem; }
     public StorageManager storage() { return services.get(StorageManager.class); }
+    public TransferProgramStore transferPrograms() { return transferPrograms; }
     public BiosResult lastPost() { return lastPost; }
     public ComputerState getState() { return state; }
     public long getUptime() { return uptime; }
@@ -71,6 +74,9 @@ public final class Computer {
         CompoundTag storageTag = new CompoundTag();
         storage().save(storageTag);
         tag.put("Storage", storageTag);
+        CompoundTag programs = new CompoundTag();
+        transferPrograms.save(programs);
+        tag.put("TransferPrograms", programs);
     }
 
     public void load(CompoundTag tag) {
@@ -80,5 +86,6 @@ public final class Computer {
         bootDiskInserted = tag.getBoolean("BootDiskInserted");
         if (tag.contains("OperatingSystem")) operatingSystem.load(tag.getCompound("OperatingSystem"));
         if (tag.contains("Storage")) storage().load(tag.getCompound("Storage"));
+        if (tag.contains("TransferPrograms")) transferPrograms.load(tag.getCompound("TransferPrograms"));
     }
 }
