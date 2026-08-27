@@ -1,5 +1,6 @@
 package com.computerstorage.common.network;
 
+import com.computerstorage.client.gui.ClientNetworkState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -22,8 +23,10 @@ public final class NetworkChannel {
         CHANNEL.registerMessage(nextId++, SyncNetworkStatePacket.class,
                 SyncNetworkStatePacket::encode,
                 SyncNetworkStatePacket::decode,
-                (message, contextSupplier) -> contextSupplier.get().enqueueWork(() -> {
-                    // Client application is intentionally registered in the next client-sync step.
-                }));
+                (message, contextSupplier) -> {
+                    var context = contextSupplier.get();
+                    context.enqueueWork(() -> ClientNetworkState.accept(message));
+                    context.setPacketHandled(true);
+                });
     }
 }
