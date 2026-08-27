@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["IRI", "RGR", "III"],
+  "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}, "G": {"item": "minecraft:gold_ingot"}},
+  "result": {"item": "computerstorage:ssd_4k", "count": 1}
+}
