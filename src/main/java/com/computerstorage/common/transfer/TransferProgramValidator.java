@@ -12,24 +12,26 @@ public final class TransferProgramValidator {
 
     private TransferProgramValidator() {}
 
-    public static Validation validate(TransferProgram program, TransferEndpointRegistry endpoints) {
+    public static Validation validate(TransferProgram program, WorldTransferEndpointRegistry endpoints) {
         if (program == null || endpoints == null) return Validation.invalid("Program or endpoint registry is null");
         if (!validId(program.id()) || !validId(program.sourceId()) || !validId(program.destinationId()))
             return Validation.invalid("Identifier is invalid or too long");
         if (program.sourceId().equals(program.destinationId()))
             return Validation.invalid("Source and destination must differ");
-        if (endpoints.get(program.sourceId()) == null || endpoints.get(program.destinationId()) == null)
+        if (!endpoints.contains(program.sourceId()) || !endpoints.contains(program.destinationId()))
             return Validation.invalid("Source and destination endpoints must exist");
-        if (program.priority() > MAX_PRIORITY)
-            return Validation.invalid("Priority exceeds server limit");
-        if (program.maxItemsPerOperation() > MAX_ITEMS_PER_OPERATION)
-            return Validation.invalid("Transfer amount exceeds server limit");
+        if (program.priority() < 0 || program.priority() > MAX_PRIORITY)
+            return Validation.invalid("Priority is outside server limits");
+        if (program.maxItemsPerOperation() < 1 || program.maxItemsPerOperation() > MAX_ITEMS_PER_OPERATION)
+            return Validation.invalid("Transfer amount is outside server limits");
+        if (program.minSourceAmount() < 0 || program.minSourceAmount() > program.maxItemsPerOperation())
+            return Validation.invalid("Minimum source amount is invalid");
+        if (program.maxDestinationAmount() < 1)
+            return Validation.invalid("Destination limit must be positive");
         if (program.schedule().intervalTicks() < 1 || program.schedule().intervalTicks() > MAX_INTERVAL_TICKS)
             return Validation.invalid("Invalid transfer interval");
-        if (program.minSourceAmount() > program.maxItemsPerOperation())
-            return Validation.invalid("Minimum source amount exceeds operation limit");
-        if (program.maxDestinationAmount() > 0 && program.maxDestinationAmount() < program.minSourceAmount())
-            return Validation.invalid("Destination limit is below source minimum");
+        if (program.schedule().offsetTicks() < 0)
+            return Validation.invalid("Invalid transfer offset");
         return Validation.valid();
     }
 
