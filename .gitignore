@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+
+# Forge runtime
+run/
+
+# IDE
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
