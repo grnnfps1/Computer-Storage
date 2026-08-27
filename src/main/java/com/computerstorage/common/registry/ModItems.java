@@ -8,6 +8,7 @@ import com.computerstorage.common.hardware.nic.NicComponent;
 import com.computerstorage.common.hardware.power.PowerComponent;
 import com.computerstorage.common.hardware.ram.RamComponent;
 import com.computerstorage.common.hardware.storage.SsdComponent;
+import com.computerstorage.common.item.BootDiskItem;
 import com.computerstorage.common.item.HardwareItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -20,7 +21,8 @@ public final class ModItems {
 
     public static final RegistryObject<Item> MOTHERBOARD_CONTROLLER = ITEMS.register("motherboard_controller",
             () -> new BlockItem(ModBlocks.MOTHERBOARD_CONTROLLER.get(), new Item.Properties()));
-
+    public static final RegistryObject<Item> BOOT_DISK = ITEMS.register("boot_disk",
+            () -> new BootDiskItem(new Item.Properties()));
     public static final RegistryObject<Item> CPU_BRONZE = ITEMS.register("cpu_bronze",
             () -> new HardwareItem(new Item.Properties(), () -> new CpuComponent("Bronze CPU", 1, 1.0, 5)));
     public static final RegistryObject<Item> RAM_1GB = ITEMS.register("ram_1gb",
