@@ -17,12 +17,12 @@ class TransferNetworkSnapshotTest {
 
         assertEquals(2, snapshot.nodeCount());
         assertEquals(1, snapshot.routeCount());
-        assertEquals("input", snapshot.routes().getFirst().sourceId());
-        assertEquals("storage", snapshot.routes().getFirst().destinationId());
-        assertEquals(10, snapshot.routes().getFirst().priority());
-        assertEquals(TransferDirection.IMPORT, snapshot.routes().getFirst().direction());
-        assertEquals(64, snapshot.routes().getFirst().maxItemsPerOperation());
-        assertEquals(8, snapshot.routes().getFirst().minSourceAmount());
-        assertEquals(512, snapshot.routes().getFirst().maxDestinationAmount());
+        assertEquals("input", snapshot.routes().get(0).sourceId());
+        assertEquals("storage", snapshot.routes().get(0).destinationId());
+        assertEquals(10, snapshot.routes().get(0).priority());
+        assertEquals(TransferDirection.IMPORT, snapshot.routes().get(0).direction());
+        assertEquals(64, snapshot.routes().get(0).maxItemsPerOperation());
+        assertEquals(8, snapshot.routes().get(0).minSourceAmount());
+        assertEquals(512, snapshot.routes().get(0).maxDestinationAmount());
     }
 }
