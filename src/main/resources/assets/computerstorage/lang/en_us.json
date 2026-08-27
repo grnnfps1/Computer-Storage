@@ -1,3 +1,10 @@
 {
-  "block.computerstorage.motherboard_controller": "Motherboard Controller"
+  "block.computerstorage.motherboard_controller": "Motherboard Controller",
+  "item.computerstorage.cpu_bronze": "Bronze CPU",
+  "item.computerstorage.ram_1gb": "1 GB RAM",
+  "item.computerstorage.gpu_diamond": "Diamond GPU",
+  "item.computerstorage.nic_ethernet": "Ethernet NIC",
+  "item.computerstorage.ssd_1k": "1K SSD",
+  "item.computerstorage.psu_basic": "Basic PSU",
+  "item.computerstorage.cooler_basic": "Basic Cooler"
 }
