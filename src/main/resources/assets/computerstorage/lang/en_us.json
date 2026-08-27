@@ -5,6 +5,11 @@
   "item.computerstorage.gpu_diamond": "Diamond GPU",
   "item.computerstorage.nic_ethernet": "Ethernet NIC",
   "item.computerstorage.ssd_1k": "1K SSD",
+  "item.computerstorage.ssd_4k": "4K SSD",
+  "item.computerstorage.ssd_16k": "16K SSD",
+  "item.computerstorage.ssd_64k": "64K SSD",
+  "item.computerstorage.ssd_256k": "256K SSD",
   "item.computerstorage.psu_basic": "Basic PSU",
-  "item.computerstorage.cooler_basic": "Basic Cooler"
+  "item.computerstorage.cooler_basic": "Basic Cooler",
+  "item.computerstorage.boot_disk": "Boot Disk"
 }
