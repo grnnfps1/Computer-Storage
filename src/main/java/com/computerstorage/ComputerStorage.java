@@ -1,9 +1,14 @@
 package com.computerstorage;
 
 import com.computerstorage.common.computer.Computer;
+import com.computerstorage.common.registry.ModBlockEntities;
+import com.computerstorage.common.registry.ModBlocks;
+import com.computerstorage.common.registry.ModMenus;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -15,6 +20,12 @@ public final class ComputerStorage {
 
     public ComputerStorage() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ComputerStorageConfig.SPEC);
+
+        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModBlocks.BLOCKS.register(modBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modBus);
+        ModMenus.MENUS.register(modBus);
+
         LOGGER.info("{} foundation bootstrapped", MOD_NAME);
     }
 
