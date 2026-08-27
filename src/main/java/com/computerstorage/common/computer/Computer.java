@@ -54,6 +54,7 @@ public final class Computer {
     public boolean ejectBootDisk() { if (!bootDiskInserted) return false; bootDiskInserted = false; return true; }
     public HardwareManager hardware() { return services.get(HardwareManager.class); }
     public OperatingSystem operatingSystem() { return operatingSystem; }
+    public StorageManager storage() { return services.get(StorageManager.class); }
     public BiosResult lastPost() { return lastPost; }
     public ComputerState getState() { return state; }
     public long getUptime() { return uptime; }
@@ -67,6 +68,9 @@ public final class Computer {
         CompoundTag os = new CompoundTag();
         operatingSystem.save(os);
         tag.put("OperatingSystem", os);
+        CompoundTag storageTag = new CompoundTag();
+        storage().save(storageTag);
+        tag.put("Storage", storageTag);
     }
 
     public void load(CompoundTag tag) {
@@ -75,5 +79,6 @@ public final class Computer {
         if (tag.contains("lastPost")) lastPost = BiosResult.valueOf(tag.getString("lastPost"));
         bootDiskInserted = tag.getBoolean("BootDiskInserted");
         if (tag.contains("OperatingSystem")) operatingSystem.load(tag.getCompound("OperatingSystem"));
+        if (tag.contains("Storage")) storage().load(tag.getCompound("Storage"));
     }
 }
