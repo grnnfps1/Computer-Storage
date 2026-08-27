@@ -14,6 +14,7 @@ public final class Computer {
     private ComputerState state = ComputerState.OFF;
     private long uptime;
     private BiosResult lastPost = BiosResult.NO_BOOT_DEVICE;
+    private boolean bootDiskInserted;
 
     public Computer() {
         services.register(HardwareManager.class, new HardwareManager());
@@ -45,7 +46,12 @@ public final class Computer {
     public void boot() { if (state == ComputerState.OFF) state = ComputerState.POST; }
     public void shutdown() { operatingSystem.shutdown(); state = ComputerState.SHUTDOWN; }
     public void powerOff() { operatingSystem.shutdown(); state = ComputerState.OFF; }
-    public boolean hasBootDevice() { return services.get(StorageManager.class).storage().capacity() > 0; }
+    public BiosResult biosPost() { return bios.post(this); }
+    public void enterBootloader() { if (state == ComputerState.BIOS) state = ComputerState.BOOTLOADER; }
+    public void enterRunning() { if (state == ComputerState.BOOTLOADER && operatingSystem.isInstalled()) { operatingSystem.boot(); state = ComputerState.RUNNING; } }
+    public boolean hasBootDevice() { return bootDiskInserted; }
+    public boolean insertBootDisk() { if (bootDiskInserted) return false; bootDiskInserted = true; return true; }
+    public boolean ejectBootDisk() { if (!bootDiskInserted) return false; bootDiskInserted = false; return true; }
     public HardwareManager hardware() { return services.get(HardwareManager.class); }
     public OperatingSystem operatingSystem() { return operatingSystem; }
     public BiosResult lastPost() { return lastPost; }
@@ -57,6 +63,7 @@ public final class Computer {
         tag.putString("state", state.name());
         tag.putLong("uptime", uptime);
         tag.putString("lastPost", lastPost.name());
+        tag.putBoolean("BootDiskInserted", bootDiskInserted);
         CompoundTag os = new CompoundTag();
         operatingSystem.save(os);
         tag.put("OperatingSystem", os);
@@ -66,6 +73,7 @@ public final class Computer {
         if (tag.contains("state")) state = ComputerState.valueOf(tag.getString("state"));
         uptime = tag.getLong("uptime");
         if (tag.contains("lastPost")) lastPost = BiosResult.valueOf(tag.getString("lastPost"));
+        bootDiskInserted = tag.getBoolean("BootDiskInserted");
         if (tag.contains("OperatingSystem")) operatingSystem.load(tag.getCompound("OperatingSystem"));
     }
 }
