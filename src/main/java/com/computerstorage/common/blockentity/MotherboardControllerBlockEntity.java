@@ -1,8 +1,11 @@
 package com.computerstorage.common.blockentity;
 
 import com.computerstorage.common.computer.Computer;
+import com.computerstorage.common.computer.services.ServiceContainer;
 import com.computerstorage.common.hardware.HardwareComponentType;
+import com.computerstorage.common.hardware.HardwareManager;
 import com.computerstorage.common.hardware.HardwareSlot;
+import com.computerstorage.common.hardware.ItemHardwareComponent;
 import com.computerstorage.common.menu.MotherboardMenu;
 import com.computerstorage.common.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -43,31 +46,28 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     private final LazyOptional<IEnergyStorage> energyCapability = LazyOptional.of(() -> energy);
     private final LazyOptional<IItemHandler> itemCapability = LazyOptional.of(() -> new InvWrapper(this));
 
-    public MotherboardControllerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.MOTHERBOARD_CONTROLLER.get(), pos, state);
-    }
+    public MotherboardControllerBlockEntity(BlockPos pos, BlockState state) { super(ModBlockEntities.MOTHERBOARD_CONTROLLER.get(), pos, state); }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MotherboardControllerBlockEntity be) {
-        be.computer.tick();
         be.syncHardwareFromInventory();
+        be.computer.tick();
     }
 
     public Computer computer() { return computer; }
     public int energyStored() { return energy.getEnergyStored(); }
     public int energyCapacity() { return energy.getMaxEnergyStored(); }
 
+    private HardwareManager hardware() { return computer.services().get(HardwareManager.class); }
+
     private void syncHardwareFromInventory() {
+        HardwareManager manager = hardware();
         for (HardwareSlot slot : HardwareSlot.values()) {
             int index = slot.ordinal();
             ItemStack stack = items.get(index);
-            if (stack.isEmpty()) {
-                if (computer.hardware().has(slot)) computer.hardware().remove(slot);
-                continue;
-            }
-            HardwareComponentType expected = slot.type();
-            if (computer.hardware().has(slot)) continue;
+            if (stack.isEmpty()) { if (manager.has(slot)) manager.remove(slot); continue; }
+            if (manager.has(slot)) continue;
             HardwareComponentType actual = hardwareType(stack);
-            if (actual == expected) computer.hardware().install(slot, new com.computerstorage.common.hardware.ItemHardwareComponent(stack));
+            if (actual == slot.type()) manager.install(slot, new ItemHardwareComponent(stack));
         }
     }
 
@@ -90,12 +90,12 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     @Override public int getContainerSize() { return SLOT_COUNT; }
     @Override public boolean isEmpty() { return items.stream().allMatch(ItemStack::isEmpty); }
     @Override public ItemStack getItem(int slot) { return items.get(slot); }
-    @Override public ItemStack removeItem(int slot, int amount) { return ItemStackHelper.removeItem(items, slot, amount); }
+    @Override public ItemStack removeItem(int slot, int amount) { ItemStack result = ItemStackHelper.removeItem(items, slot, amount); setChanged(); return result; }
     @Override public ItemStack removeItemNoUpdate(int slot) { return ItemStackHelper.takeItem(items, slot); }
     @Override public void setItem(int slot, ItemStack stack) { items.set(slot, stack); setChanged(); }
     @Override public boolean stillValid(Player player) { return isUsableByPlayer(player); }
     @Override public void clearContent() { items.clear(); setChanged(); }
-    @Override public boolean canPlaceItem(int slot, ItemStack stack) { return slot >= HARDWARE_SLOTS || hardwareType(stack) == HardwareSlot.values()[slot].type(); }
+    @Override public boolean canPlaceItem(int slot, ItemStack stack) { return slot >= HARDWARE_SLOTS || (slot < HARDWARE_SLOTS && hardwareType(stack) == HardwareSlot.values()[slot].type()); }
     @Override protected void saveAdditional(CompoundTag tag) { super.saveAdditional(tag); ItemStackHelper.saveAllItems(tag, items); tag.putInt("Energy", energy.getEnergyStored()); CompoundTag c = new CompoundTag(); computer.save(c); tag.put("Computer", c); }
     @Override public void load(CompoundTag tag) { super.load(tag); ItemStackHelper.loadAllItems(tag, items); energy.setEnergy(tag.getInt("Energy")); if (tag.contains("Computer")) computer.load(tag.getCompound("Computer")); }
     @Override public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) { if (capability == ForgeCapabilities.ENERGY) return energyCapability.cast(); if (capability == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast(); return super.getCapability(capability, side); }
