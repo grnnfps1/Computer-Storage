@@ -21,4 +21,4 @@ jobs:
         with:
           gradle-version: '8.8'
       - name: Build and test
-        run: gradle build --no-daemon
+        run: gradle clean build --no-daemon
