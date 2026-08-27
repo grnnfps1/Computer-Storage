@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["DGD", "GRG", "III"],
+  "key": {"I": {"item": "minecraft:iron_ingot"}, "R": {"item": "minecraft:redstone"}, "G": {"item": "minecraft:gold_ingot"}, "D": {"item": "minecraft:diamond"}},
+  "result": {"item": "computerstorage:ssd_16k", "count": 1}
+}
