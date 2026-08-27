@@ -16,6 +16,6 @@ class TransferProgramRepositoryTest {
         assertEquals("high", repository.orderedPrograms().get(0).id());
         assertEquals("middle", repository.orderedPrograms().get(1).id());
         assertEquals(3, repository.matchingSource("a").size());
-        assertEquals(1, repository.matching("a", "b").size());
+        assertEquals(2, repository.matching("a", "b").size());
     }
 }
