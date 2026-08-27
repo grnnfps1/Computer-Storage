@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "computerstorage:block/motherboard_controller"
+    }
+  }
+}
