@@ -1,6 +1,6 @@
 package com.computerstorage.common.network;
 
-import com.computerstorage.client.gui.ClientNetworkState;
+import com.computerstorage.client.network.ClientNetworkState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -25,7 +25,7 @@ public final class NetworkChannel {
                 SyncNetworkStatePacket::decode,
                 (message, contextSupplier) -> {
                     var context = contextSupplier.get();
-                    context.enqueueWork(() -> ClientNetworkState.accept(message));
+                    context.enqueueWork(() -> ClientNetworkState.apply(message));
                     context.setPacketHandled(true);
                 });
     }
