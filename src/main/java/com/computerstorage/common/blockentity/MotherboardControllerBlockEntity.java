@@ -3,6 +3,7 @@ package com.computerstorage.common.blockentity;
 import com.computerstorage.common.computer.Computer;
 import com.computerstorage.common.hardware.HardwareManager;
 import com.computerstorage.common.hardware.HardwareSlot;
+import com.computerstorage.common.hardware.HardwareSlotRules;
 import com.computerstorage.common.hardware.HardwareType;
 import com.computerstorage.common.hardware.ItemHardwareComponent;
 import com.computerstorage.common.menu.MotherboardMenu;
@@ -63,12 +64,12 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
             if (actual == slot.type()) manager.install(slot, new ItemHardwareComponent(stack));
         }
     }
+    private static String itemPath(ItemStack stack) {
+        return stack.getItem().builtInRegistryHolder().key().location().getPath();
+    }
+
     private static HardwareType hardwareType(ItemStack stack) {
-        String id = stack.getItem().builtInRegistryHolder().key().location().getPath();
-        if (id.contains("cpu")) return HardwareType.CPU; if (id.contains("ram")) return HardwareType.RAM;
-        if (id.contains("gpu")) return HardwareType.GPU; if (id.contains("nic")) return HardwareType.NIC;
-        if (id.contains("ssd")) return HardwareType.SSD; if (id.contains("power") || id.contains("psu")) return HardwareType.POWER;
-        if (id.contains("cooler")) return HardwareType.COOLER; return null;
+        return HardwareSlotRules.typeOf(itemPath(stack));
     }
     public void writeScreenOpeningData(FriendlyByteBuf buffer) { buffer.writeBlockPos(worldPosition); }
     public boolean isUsableByPlayer(Player player) { return level != null && level.getBlockEntity(worldPosition) == this && player.distanceToSqr(worldPosition.getX()+.5D, worldPosition.getY()+.5D, worldPosition.getZ()+.5D) <= 64.0D; }
@@ -82,7 +83,7 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     @Override public void setItem(int slot, ItemStack stack) { items.set(slot, stack); setChanged(); }
     @Override public boolean stillValid(Player player) { return isUsableByPlayer(player); }
     @Override public void clearContent() { items.clear(); setChanged(); }
-    @Override public boolean canPlaceItem(int slot, ItemStack stack) { return slot >= HARDWARE_SLOTS || hardwareType(stack) == HardwareSlot.values()[slot].type(); }
+    @Override public boolean canPlaceItem(int slot, ItemStack stack) { return HardwareSlotRules.accepts(slot, itemPath(stack)); }
     @Override protected void saveAdditional(net.minecraft.nbt.CompoundTag tag) { super.saveAdditional(tag); ContainerHelper.saveAllItems(tag, items); tag.putInt("Energy", energy.getEnergyStored()); net.minecraft.nbt.CompoundTag c = new net.minecraft.nbt.CompoundTag(); computer.save(c); tag.put("Computer", c); }
     @Override public void load(net.minecraft.nbt.CompoundTag tag) { super.load(tag); ContainerHelper.loadAllItems(tag, items); energy.setEnergy(tag.getInt("Energy")); if (tag.contains("Computer")) computer.load(tag.getCompound("Computer")); }
     @Override public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) { if (capability == ForgeCapabilities.ENERGY) return energyCapability.cast(); if (capability == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast(); return super.getCapability(capability, side); }

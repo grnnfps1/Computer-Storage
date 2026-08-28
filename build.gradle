@@ -32,10 +32,16 @@ minecraft {
 
 repositories {
     maven { url = 'https://maven.minecraftforge.net' }
+    // JEI, development runtime only (see dependencies below).
+    maven { url = 'https://maven.blamejared.com' }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // Dev convenience only: lets runClient browse and grab the mod's items. Deliberately
+    // runtimeOnly and without the JEI API, so no mod code compiles against JEI and the
+    // shipped jar has no dependency on it.
+    runtimeOnly fg.deobf('mezz.jei:jei-1.20.1-forge:15.49.0.199')
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
