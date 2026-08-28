@@ -29,14 +29,34 @@ public final class Computer {
     }
 
     public void tick() {
-        if (state == ComputerState.OFF) return;
+        PowerManager power = services.get(PowerManager.class);
+        power.tick(this);
+        if (!power.isPowered()) {
+            // Brownout: the machine cannot hold its state without energy.
+            if (state != ComputerState.OFF) powerOff();
+            return;
+        }
+        // Energy present is what switches the machine on; nothing else calls boot().
+        if (state == ComputerState.OFF) state = ComputerState.POST;
         if (state == ComputerState.POST) {
             lastPost = bios.post(this);
-            if (lastPost == BiosResult.OK) state = operatingSystem.isInstalled() ? ComputerState.RUNNING : ComputerState.BIOS;
+            if (lastPost != BiosResult.OK) return;
+            if (operatingSystem.isInstalled()) {
+                state = ComputerState.RUNNING;
+            } else {
+                // POST only succeeds with a boot device present, so the disk installs the OS.
+                operatingSystem.install();
+                state = ComputerState.LOADING;
+            }
+            return;
+        }
+        if (state == ComputerState.LOADING) {
+            operatingSystem.finishInstallation();
+            operatingSystem.boot();
+            state = operatingSystem.isRunning() ? ComputerState.RUNNING : ComputerState.BIOS;
             return;
         }
         services.get(HardwareManager.class).tick();
-        services.get(PowerManager.class).tick(this);
         services.get(TaskManager.class).tick(this);
         services.get(TemperatureManager.class).tick(this);
         services.get(NetworkManager.class).tick(this);

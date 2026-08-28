@@ -29,6 +29,23 @@ public final class HardwareSlotRules {
     }
 
     /**
+     * The contiguous socket range {@code [from, to)} that holds a hardware type, or null when the
+     * type has no socket. RAM and SSD span four sockets each; the rest are single.
+     */
+    @Nullable
+    public static int[] socketRange(@Nullable HardwareType type) {
+        if (type == null) return null;
+        HardwareSlot[] all = HardwareSlot.values();
+        int from = -1, to = -1;
+        for (int i = 0; i < all.length; i++) {
+            if (all[i].type() != type) continue;
+            if (from < 0) from = i;
+            to = i + 1;
+        }
+        return from < 0 ? null : new int[]{from, to};
+    }
+
+    /**
      * Whether the given controller slot accepts the item. Hardware sockets accept only their own
      * type; the internal buffer accepts anything by design.
      */

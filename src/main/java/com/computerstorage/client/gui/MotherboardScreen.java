@@ -41,6 +41,11 @@ public final class MotherboardScreen extends AbstractContainerScreen<Motherboard
         for (Slot slot : menu.slots) drawSlotWell(graphics, left + slot.x, top + slot.y);
     }
 
+    /** How much of the SSD-backed index is in use. */
+    private Component storageLabel() {
+        return Component.literal(menu.storageUsed() + " / " + menu.storageCapacity());
+    }
+
     /**
      * Draws the sunken 18x18 cell behind a slot: one dark pixel along the top and left, one light
      * pixel along the bottom and right, and a 16x16 well under the item itself.
@@ -55,8 +60,9 @@ public final class MotherboardScreen extends AbstractContainerScreen<Motherboard
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(font, title, 8, 9, TEXT, false);
-        Component energy = Component.literal("FE: " + menu.getController().energyStored());
+        Component energy = Component.literal("FE: " + menu.energy());
         graphics.drawString(font, energy, imageWidth - 8 - font.width(energy), 22, TEXT_ENERGY, false);
+        graphics.drawString(font, storageLabel(), 10, 22, TEXT_MUTED, false);
         graphics.drawString(font, Component.literal("HARDWARE"), 10, 41, TEXT_MUTED, false);
         graphics.drawString(font, Component.literal("INTERNAL STORAGE"), 10, 94, TEXT_MUTED, false);
         graphics.drawString(font, playerInventoryTitle, 10, 147, TEXT_MUTED, false);

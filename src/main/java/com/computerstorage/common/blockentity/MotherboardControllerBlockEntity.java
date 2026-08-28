@@ -15,6 +15,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
+import com.computerstorage.common.storage.StorageIntake;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -40,16 +42,48 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     public static final int ENERGY_TRANSFER = 2_000;
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final Computer computer = new Computer();
+    private ControllerRuntime runtime;
     private final PersistedEnergyStorage energy = new PersistedEnergyStorage(ENERGY_CAPACITY, ENERGY_TRANSFER, ENERGY_TRANSFER);
     private final LazyOptional<IEnergyStorage> energyCapability = LazyOptional.of(() -> energy);
     private final LazyOptional<IItemHandler> itemCapability = LazyOptional.of(() -> new InvWrapper(this));
 
     public MotherboardControllerBlockEntity(BlockPos pos, BlockState state) { super(ModBlockEntities.MOTHERBOARD_CONTROLLER.get(), pos, state); }
     public static void serverTick(Level level, BlockPos pos, BlockState state, MotherboardControllerBlockEntity be) {
-        be.syncHardwareFromInventory();
-        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) be.computer.services().get(com.computerstorage.common.computer.services.LogisticsManager.class).bindLevel(serverLevel);
-        be.computer.tick();
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel)
+            be.computer.services().get(com.computerstorage.common.computer.services.LogisticsManager.class).bindLevel(serverLevel);
+        be.runtime().tick(be.energy);
+        be.setChanged();
     }
+
+    private ControllerRuntime runtime() {
+        if (runtime == null) runtime = new ControllerRuntime(this, computer, HARDWARE_SLOTS,
+                MotherboardControllerBlockEntity::componentFor, MotherboardControllerBlockEntity::isBootDisk);
+        return runtime;
+    }
+
+
+    static boolean isBootDisk(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof com.computerstorage.common.item.BootDiskItem;
+    }
+
+
+    /** Hands back every item the machine holds: sockets, buffer, and the logical index. */
+    public void dropContents(Level level, BlockPos pos) {
+        Containers.dropContents(level, pos, this);
+        for (ItemStack stored : computer.storage().storage().drainAll()) {
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stored);
+        }
+    }
+
+    /**
+     * TEMPORARY DEBUG HOOK. The mod has no generator yet, so there is no in-game way to put FE
+     * into the machine. Remove this together with the redstone-block interaction in
+     * MotherboardControllerBlock once a real energy source exists.
+     */
+    public int debugCharge(int amount) { return energy.receiveEnergy(amount, false); }
+
+    public long storageUsed() { return computer.storage().storage().used(); }
+    public long storageCapacity() { return computer.storage().storage().capacity(); }
     public Computer computer() { return computer; }
     public int energyStored() { return energy.getEnergyStored(); }
     public int energyCapacity() { return energy.getMaxEnergyStored(); }
@@ -66,6 +100,12 @@ public final class MotherboardControllerBlockEntity extends BlockEntity implemen
     }
     private static String itemPath(ItemStack stack) {
         return stack.getItem().builtInRegistryHolder().key().location().getPath();
+    }
+
+    /** The typed component the hardware item carries, so its stats survive installation. */
+    private static com.computerstorage.common.hardware.IHardwareComponent componentFor(ItemStack stack) {
+        if (stack.getItem() instanceof com.computerstorage.common.item.HardwareItem hardware) return hardware.createComponent();
+        return new ItemHardwareComponent(stack);
     }
 
     private static HardwareType hardwareType(ItemStack stack) {

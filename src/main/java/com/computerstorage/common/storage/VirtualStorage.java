@@ -60,6 +60,25 @@ public final class VirtualStorage {
 
     public void clear() { entries.clear(); }
 
+    /**
+     * Removes everything from the index and returns it as stacks no larger than their max size,
+     * so the contents can be handed back to the world when the machine is broken.
+     */
+    public java.util.List<ItemStack> drainAll() {
+        java.util.List<ItemStack> drained = new java.util.ArrayList<>();
+        for (Entry entry : entries.values()) {
+            int remaining = entry.count();
+            int maxStack = Math.max(1, entry.prototype().getMaxStackSize());
+            while (remaining > 0) {
+                int size = Math.min(remaining, maxStack);
+                drained.add(entry.prototype().copyWithCount(size));
+                remaining -= size;
+            }
+        }
+        entries.clear();
+        return drained;
+    }
+
     public void save(CompoundTag tag) {
         tag.putLong("Capacity", capacity);
         ListTag list = new ListTag();

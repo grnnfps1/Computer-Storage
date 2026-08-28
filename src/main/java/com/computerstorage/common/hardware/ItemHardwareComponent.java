@@ -17,14 +17,8 @@ public final class ItemHardwareComponent implements IHardwareComponent {
     @Override public void tick() { }
     @Override public String getName() { return stack.getHoverName().getString(); }
     @Override public HardwareType getType() {
-        String id = stack.getItem().builtInRegistryHolder().key().location().getPath();
-        if (id.contains("cpu")) return HardwareType.CPU;
-        if (id.contains("ram")) return HardwareType.RAM;
-        if (id.contains("gpu")) return HardwareType.GPU;
-        if (id.contains("nic")) return HardwareType.NIC;
-        if (id.contains("ssd")) return HardwareType.SSD;
-        if (id.contains("power")) return HardwareType.POWER;
-        return HardwareType.COOLER;
+        // One source of truth; the old fallback made every unknown item claim to be a cooler.
+        return HardwareSlotRules.typeOf(stack.getItem().builtInRegistryHolder().key().location().getPath());
     }
     @Override public void save(CompoundTag tag) {
         tag.putBoolean("Installed", installed);

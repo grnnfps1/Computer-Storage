@@ -52,6 +52,41 @@ class VirtualStorageTest {
     }
 
     @Test
+    void drainAllHandsBackEverythingAndEmptiesTheIndex() {
+        VirtualStorage storage = new VirtualStorage(1_000);
+        storage.insert(new ItemStack(Items.IRON_INGOT, 40));
+        storage.insert(new ItemStack(Items.DIAMOND, 7));
+
+        java.util.List<ItemStack> drained = storage.drainAll();
+
+        int iron = drained.stream().filter(s -> s.getItem() == Items.IRON_INGOT).mapToInt(ItemStack::getCount).sum();
+        int diamond = drained.stream().filter(s -> s.getItem() == Items.DIAMOND).mapToInt(ItemStack::getCount).sum();
+        assertEquals(40, iron, "every stored item must come back");
+        assertEquals(7, diamond);
+        assertTrue(storage.isEmpty(), "the index must be empty after draining");
+        assertEquals(0, storage.used());
+    }
+
+    @Test
+    void drainAllSplitsIntoStacksTheWorldCanHold() {
+        VirtualStorage storage = new VirtualStorage(1_000);
+        storage.insert(new ItemStack(Items.IRON_INGOT, 200));
+
+        java.util.List<ItemStack> drained = storage.drainAll();
+
+        assertEquals(200, drained.stream().mapToInt(ItemStack::getCount).sum());
+        for (ItemStack stack : drained) {
+            assertTrue(stack.getCount() <= stack.getMaxStackSize(), "no stack may exceed its max size");
+        }
+        assertEquals(4, drained.size(), "200 iron ingots is four stacks of at most 64");
+    }
+
+    @Test
+    void drainAllOnAnEmptyIndexReturnsNothing() {
+        assertTrue(new VirtualStorage(100).drainAll().isEmpty());
+    }
+
+    @Test
     void savesAndRestoresItems() {
         VirtualStorage original = new VirtualStorage(100);
         original.insert(new ItemStack(Items.DIAMOND, 32));
