@@ -11,5 +11,12 @@
   "item.computerstorage.ssd_256k": "256K SSD",
   "item.computerstorage.psu_basic": "Basic PSU",
   "item.computerstorage.cooler_basic": "Basic Cooler",
-  "item.computerstorage.boot_disk": "Boot Disk"
+  "item.computerstorage.boot_disk": "Boot Disk",
+  "block.computerstorage.storage_monitor": "Storage Monitor",
+  "message.computerstorage.no_computer": "No computer connected",
+  "gui.computerstorage.search": "Search",
+  "gui.computerstorage.computer_offline": "Computer offline",
+  "block.computerstorage.creative_energy_cell": "Creative Energy Cell",
+  "tooltip.computerstorage.creative_energy_cell.debug": "Creative / debug tool - not survival content",
+  "tooltip.computerstorage.creative_energy_cell.usage": "Supplies unlimited FE to any adjacent machine"
 }

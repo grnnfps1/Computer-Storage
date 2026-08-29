@@ -2,6 +2,7 @@ package com.computerstorage.client;
 
 import com.computerstorage.ComputerStorage;
 import com.computerstorage.client.gui.MotherboardScreen;
+import com.computerstorage.client.gui.StorageMonitorScreen;
 import com.computerstorage.common.registry.ModMenus;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,6 +16,9 @@ public final class ClientSetup {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> MenuScreens.register(ModMenus.MOTHERBOARD.get(), MotherboardScreen::new));
+        event.enqueueWork(() -> {
+            MenuScreens.register(ModMenus.MOTHERBOARD.get(), MotherboardScreen::new);
+            MenuScreens.register(ModMenus.STORAGE_MONITOR.get(), StorageMonitorScreen::new);
+        });
     }
 }

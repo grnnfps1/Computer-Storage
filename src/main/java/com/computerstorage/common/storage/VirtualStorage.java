@@ -61,6 +61,21 @@ public final class VirtualStorage {
     public void clear() { entries.clear(); }
 
     /**
+     * A non-destructive listing of what is stored, one entry per distinct item, each carrying the
+     * full stored count even when that exceeds a normal stack. This is what a terminal displays;
+     * {@link #drainAll()} empties the index and is for handing contents back to the world.
+     */
+    public java.util.List<ItemStack> snapshot() {
+        java.util.List<ItemStack> listing = new java.util.ArrayList<>(entries.size());
+        for (Entry entry : entries.values()) {
+            ItemStack shown = entry.prototype().copy();
+            shown.setCount(entry.count());
+            listing.add(shown);
+        }
+        return listing;
+    }
+
+    /**
      * Removes everything from the index and returns it as stacks no larger than their max size,
      * so the contents can be handed back to the world when the machine is broken.
      */

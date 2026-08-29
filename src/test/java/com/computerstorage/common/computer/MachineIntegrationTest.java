@@ -115,6 +115,68 @@ class MachineIntegrationTest {
     }
 
     @Test
+    void itStaysRunningTickAfterTickWhileTheBufferHasEnergy() {
+        EnergyStorage rail = buffer(5_000);
+        Computer computer = assembledMachine(rail, true);
+        tick(computer, 5);
+        assertEquals(ComputerState.RUNNING, computer.getState());
+
+        for (int i = 0; i < 200; i++) {
+            computer.tick();
+            assertEquals(ComputerState.RUNNING, computer.getState(),
+                    "the machine dropped out of RUNNING at tick " + i + " with "
+                            + rail.getEnergyStored() + " FE still in the buffer");
+        }
+        assertTrue(rail.getEnergyStored() > 0, "this run must not have exhausted the buffer");
+    }
+
+    @Test
+    void itOnlyDropsToOffOnceTheBufferCannotCoverAnotherTick() {
+        EnergyStorage rail = buffer(300);
+        Computer computer = assembledMachine(rail, true);
+        tick(computer, 5);
+        assertEquals(ComputerState.RUNNING, computer.getState());
+
+        int ticksAlive = 0;
+        while (computer.getState() == ComputerState.RUNNING && ticksAlive < 1_000) {
+            computer.tick();
+            ticksAlive++;
+        }
+
+        int perTick = computer.services().get(PowerManager.class).getLastDemand();
+        assertEquals(ComputerState.OFF, computer.getState());
+        assertTrue(rail.getEnergyStored() < perTick,
+                "it must run on while the buffer can still cover a whole tick, but stopped holding "
+                        + rail.getEnergyStored() + " FE against " + perTick + " FE per tick");
+        assertTrue(ticksAlive > 10, "300 FE has to last far longer than a handful of ticks, was " + ticksAlive);
+    }
+
+    @Test
+    void aBufferBelowOneTickOfDemandIsLeftUntouched() {
+        EnergyStorage rail = buffer(3);
+        Computer computer = assembledMachine(rail, true);
+
+        tick(computer, 10);
+
+        assertEquals(ComputerState.OFF, computer.getState(), "3 FE cannot run a machine that needs more");
+        assertEquals(3, rail.getEnergyStored(),
+                "a draw the machine cannot use must leave the buffer alone, not burn it down");
+    }
+
+    @Test
+    void rechargingBringsTheMachineBack() {
+        EnergyStorage rail = buffer(100);
+        Computer computer = assembledMachine(rail, true);
+        while (computer.getState() != ComputerState.OFF) computer.tick();
+        assertEquals(ComputerState.OFF, computer.getState());
+
+        rail.receiveEnergy(2_000, false);
+        tick(computer, 5);
+
+        assertEquals(ComputerState.RUNNING, computer.getState(), "energy must switch it back on");
+    }
+
+    @Test
     void runningTheMachineActuallyDrawsEnergyFromTheBuffer() {
         EnergyStorage rail = buffer(50_000);
         Computer computer = assembledMachine(rail, true);

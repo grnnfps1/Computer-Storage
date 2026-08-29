@@ -43,8 +43,15 @@ public final class PowerManager implements IComputerService {
         powered = lastSupplied >= lastDemand;
     }
 
+    /**
+     * Draws a full tick of demand or nothing at all. A partial draw would burn the buffer down
+     * without ever powering the machine, so a supply weaker than the demand could drain the
+     * buffer forever and never switch it on.
+     */
     @Override public void tick(Computer computer) {
         int required = demand(computer);
-        consume(rail == null ? required : rail.extractEnergy(required, false));
+        if (rail == null) { consume(required); return; }
+        int available = rail.extractEnergy(required, true);
+        consume(available < required ? 0 : rail.extractEnergy(required, false));
     }
 }

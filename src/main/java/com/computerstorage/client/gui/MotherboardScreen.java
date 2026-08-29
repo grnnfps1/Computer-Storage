@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import com.computerstorage.common.hardware.HardwareSlotRules;
 import net.minecraft.world.inventory.Slot;
 
 public final class MotherboardScreen extends AbstractContainerScreen<MotherboardMenu> {
@@ -13,16 +14,6 @@ public final class MotherboardScreen extends AbstractContainerScreen<Motherboard
     static final int HARDWARE_TOP = 38, HARDWARE_BOTTOM = 89;
     static final int INTERNAL_TOP = 91, INTERNAL_BOTTOM = 142;
     static final int PLAYER_TOP = 144, PLAYER_BOTTOM = 234;
-
-    private static final int BACKDROP = 0xFF10151B;
-    private static final int HEADER = 0xFF202A33;
-    private static final int SECTION = 0xFF161D24;
-    private static final int SLOT_LIGHT = 0xFF44525F;
-    private static final int SLOT_DARK = 0xFF0C1116;
-    private static final int SLOT_WELL = 0xFF232E38;
-    private static final int TEXT = 0xFFFFFFFF;
-    private static final int TEXT_MUTED = 0xFF8FA9BF;
-    private static final int TEXT_ENERGY = 0xFFB9E6FF;
 
     public MotherboardScreen(MotherboardMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -33,38 +24,48 @@ public final class MotherboardScreen extends AbstractContainerScreen<Motherboard
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int left = leftPos, top = topPos, right = leftPos + imageWidth;
-        graphics.fill(left, top, right, top + imageHeight, BACKDROP);
-        graphics.fill(left + 5, top + HEADER_TOP, right - 5, top + HEADER_BOTTOM, HEADER);
-        graphics.fill(left + 5, top + HARDWARE_TOP, right - 5, top + HARDWARE_BOTTOM, SECTION);
-        graphics.fill(left + 5, top + INTERNAL_TOP, right - 5, top + INTERNAL_BOTTOM, SECTION);
-        graphics.fill(left + 5, top + PLAYER_TOP, right - 5, top + PLAYER_BOTTOM, SECTION);
-        for (Slot slot : menu.slots) drawSlotWell(graphics, left + slot.x, top + slot.y);
-    }
+        GuiTheme.window(graphics, left, top, imageWidth, imageHeight);
+        GuiTheme.header(graphics, left + 5, top + HEADER_TOP, right - 5, top + HEADER_BOTTOM);
+        GuiTheme.panel(graphics, left + 5, top + HARDWARE_TOP, right - 5, top + HARDWARE_BOTTOM);
+        GuiTheme.panel(graphics, left + 5, top + INTERNAL_TOP, right - 5, top + INTERNAL_BOTTOM);
+        GuiTheme.panel(graphics, left + 5, top + PLAYER_TOP, right - 5, top + PLAYER_BOTTOM);
 
-    /** How much of the SSD-backed index is in use. */
-    private Component storageLabel() {
-        return Component.literal(menu.storageUsed() + " / " + menu.storageCapacity());
-    }
-
-    /**
-     * Draws the sunken 18x18 cell behind a slot: one dark pixel along the top and left, one light
-     * pixel along the bottom and right, and a 16x16 well under the item itself.
-     */
-    private void drawSlotWell(GuiGraphics graphics, int x, int y) {
-        int x0 = x - 1, y0 = y - 1, x1 = x + 17, y1 = y + 17;
-        graphics.fill(x0, y0, x1, y1, SLOT_LIGHT);
-        graphics.fill(x0, y0, x1 - 1, y1 - 1, SLOT_DARK);
-        graphics.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, SLOT_WELL);
+        for (int index = 0; index < menu.slots.size(); index++) {
+            Slot slot = menu.slots.get(index);
+            int x = left + slot.x, y = top + slot.y;
+            GuiTheme.slotWell(graphics, x, y, index < HardwareSlotRules.HARDWARE_SLOTS,
+                    GuiTheme.overCell(mouseX, mouseY, x, y));
+        }
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, 8, 9, TEXT, false);
-        Component energy = Component.literal("FE: " + menu.energy());
-        graphics.drawString(font, energy, imageWidth - 8 - font.width(energy), 22, TEXT_ENERGY, false);
-        graphics.drawString(font, storageLabel(), 10, 22, TEXT_MUTED, false);
-        graphics.drawString(font, Component.literal("HARDWARE"), 10, 41, TEXT_MUTED, false);
-        graphics.drawString(font, Component.literal("INTERNAL STORAGE"), 10, 94, TEXT_MUTED, false);
-        graphics.drawString(font, playerInventoryTitle, 10, 147, TEXT_MUTED, false);
+        GuiTheme.lamp(graphics, 9, 11, menu.energy() > 0);
+        graphics.drawString(font, title, 17, 9, GuiTheme.TEXT, false);
+
+        drawReading(graphics, "FE", String.valueOf(menu.energy()), 22);
+        graphics.drawString(font, Component.literal(menu.storageUsed() + " / " + menu.storageCapacity()),
+                10, 22, GuiTheme.TEXT_DIM, false);
+
+        section(graphics, "HARDWARE", 41);
+        section(graphics, "INTERNAL STORAGE", 94);
+        section(graphics, playerInventoryTitle.getString(), 147);
+    }
+
+    /** Section label with its accent rail and a hairline running to the panel edge. */
+    private void section(GuiGraphics graphics, String label, int y) {
+        GuiTheme.labelRail(graphics, 8, y);
+        graphics.drawString(font, Component.literal(label), 14, y, GuiTheme.TEXT_MUTED, false);
+        int textEnd = 14 + font.width(label) + 4;
+        graphics.hLine(textEnd, imageWidth - 9, y + 4, GuiTheme.EDGE_LIGHT);
+    }
+
+    /** Right-aligned readout: dim label, accent value. */
+    private void drawReading(GuiGraphics graphics, String label, String value, int y) {
+        int valueWidth = font.width(value);
+        int valueX = imageWidth - 8 - valueWidth;
+        graphics.drawString(font, Component.literal(value), valueX, y, GuiTheme.ACCENT, false);
+        graphics.drawString(font, Component.literal(label), valueX - 4 - font.width(label), y,
+                GuiTheme.TEXT_DIM, false);
     }
 }
