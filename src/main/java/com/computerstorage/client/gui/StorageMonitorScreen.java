@@ -1,6 +1,7 @@
 package com.computerstorage.client.gui;
 
 import com.computerstorage.common.menu.StorageMonitorMenu;
+import com.computerstorage.common.network.DepositToIndexPacket;
 import com.computerstorage.common.network.NetworkChannel;
 import com.computerstorage.common.network.WithdrawFromIndexPacket;
 import com.computerstorage.common.storage.IndexQuery;
@@ -297,6 +298,12 @@ public final class StorageMonitorScreen extends AbstractContainerScreen<StorageM
         return (count / 100_000 / 10.0) + "M";
     }
 
+    /** The whole grid rectangle, empty cells included: a deposit does not need an entry under it. */
+    private boolean overGrid(int mouseX, int mouseY) {
+        return GuiTheme.over(mouseX, mouseY, leftPos + GRID_LEFT, topPos + GRID_TOP,
+                leftPos + GRID_LEFT + COLUMNS * CELL, topPos + GRID_TOP + ROWS * CELL);
+    }
+
     private ItemStack entryAt(int mouseX, int mouseY) {
         List<ItemStack> entries = visible();
         int relX = mouseX - (leftPos + GRID_LEFT);
@@ -319,6 +326,13 @@ public final class StorageMonitorScreen extends AbstractContainerScreen<StorageM
         int x = (int) mouseX;
         int y = (int) mouseY;
         if (clickedCategory(x, y) || clickedPager(x, y)) return true;
+
+        // An item on the cursor dropped on the grid goes into the index rather than taking one
+        // out. Left click offers the whole handful, right click a single item.
+        if (!menu.getCarried().isEmpty() && overGrid(x, y) && menu.computerRunning()) {
+            NetworkChannel.CHANNEL.sendToServer(new DepositToIndexPacket(button != 1));
+            return true;
+        }
 
         ItemStack entry = entryAt(x, y);
         if (entry != null && menu.computerRunning()) {

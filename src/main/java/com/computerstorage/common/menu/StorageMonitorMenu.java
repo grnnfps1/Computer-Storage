@@ -5,6 +5,7 @@ import com.computerstorage.common.blockentity.StorageMonitorBlockEntity;
 import com.computerstorage.common.computer.ComputerState;
 import com.computerstorage.common.network.SyncStorageIndexPacket;
 import com.computerstorage.common.registry.ModMenus;
+import com.computerstorage.common.storage.DepositService;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -79,7 +80,32 @@ public final class StorageMonitorMenu extends AbstractContainerMenu {
 
     public MonitorSnapshot snapshot() { return snapshot; }
 
-    @Override public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
+    /**
+     * Shift-clicking a stack in the player's inventory sends it to the storage index.
+     *
+     * <p>There is nowhere else for it to go: every slot in this menu belongs to the player, so the
+     * usual container-to-container shuffle has no meaning here. Whatever the index cannot hold is
+     * put straight back in the slot it came from, so a full index costs the player nothing.
+     */
+    @Override public ItemStack quickMoveStack(Player player, int index) {
+        if (player.level().isClientSide) return ItemStack.EMPTY;
+        MotherboardControllerBlockEntity controller = controller();
+        if (controller == null) return ItemStack.EMPTY;
+
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
+
+        ItemStack leftover = DepositService.deposit(controller.computer().storage().storage(),
+                slot.getItem(), computerRunning());
+        if (leftover == slot.getItem()) return ItemStack.EMPTY;
+
+        slot.set(leftover);
+        slot.setChanged();
+        controller.setChanged();
+        // Always empty: the move is one-shot, and a non-empty return would make the vanilla click
+        // loop call this again for the same slot.
+        return ItemStack.EMPTY;
+    }
 
     @Override public boolean stillValid(Player player) {
         return monitor != null && monitor.isUsableByPlayer(player);

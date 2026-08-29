@@ -39,6 +39,9 @@ public final class NetworkChannel {
         CHANNEL.registerMessage(nextId++, WithdrawFromIndexPacket.class,
                 WithdrawFromIndexPacket::encode, WithdrawFromIndexPacket::decode,
                 NetworkChannel::handleWithdraw);
+        CHANNEL.registerMessage(nextId++, DepositToIndexPacket.class,
+                DepositToIndexPacket::encode, DepositToIndexPacket::decode,
+                NetworkChannel::handleDeposit);
     }
 
     /** Sends the listing behind an open monitor to one player. */
@@ -50,6 +53,33 @@ public final class NetworkChannel {
                 : java.util.List.<net.minecraft.world.item.ItemStack>of();
         CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
                 new SyncStorageIndexPacket(running, listing));
+    }
+
+    private static void handleDeposit(DepositToIndexPacket message, java.util.function.Supplier<NetworkEvent.Context> supplier) {
+        var context = supplier.get();
+        ServerPlayer player = context.getSender();
+        context.enqueueWork(() -> {
+            if (player == null || !(player.containerMenu instanceof com.computerstorage.common.menu.StorageMonitorMenu menu)) return;
+            if (!menu.stillValid(player)) return;
+            var controller = menu.controller();
+            if (controller == null) return;
+
+            // The carried stack is read from the menu, never from the packet: the client says only
+            // what it wants done. The machine state is re-checked here for the same reason.
+            net.minecraft.world.item.ItemStack carried = menu.getCarried();
+            if (carried.isEmpty()) return;
+
+            var index = controller.computer().storage().storage();
+            net.minecraft.world.item.ItemStack leftover = message.wholeStack()
+                    ? com.computerstorage.common.storage.DepositService.deposit(index, carried, menu.computerRunning())
+                    : com.computerstorage.common.storage.DepositService.depositAmount(index, carried, 1, menu.computerRunning());
+            if (leftover == carried) return;
+
+            menu.setCarried(leftover);
+            controller.setChanged();
+            sendIndex(player, menu);
+        });
+        context.setPacketHandled(true);
     }
 
     private static void handleWithdraw(WithdrawFromIndexPacket message, java.util.function.Supplier<NetworkEvent.Context> supplier) {
